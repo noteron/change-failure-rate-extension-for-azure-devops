@@ -22,8 +22,8 @@
     "build": "npm run compile",
     "build:dev": "npm run compile:dev && npm run postbuild",
     "postbuild": "npm run package -- --rev-version",
-    "package": "tfx extension create --manifest-globs azure-devops-extension.json src/Samples/**/*.json",
-    "publish": "tfx extension publish --manifest-globs azure-devops-extension.json src/Samples/**/*.json",
+    "package": "tfx extension create --manifest-globs azure-devops-extension.json src/Contributions/**/*.json",
+    "publish": "tfx extension publish --manifest-globs azure-devops-extension.json src/Contributions/**/*.json",
     "test": "cross-env TEST_REPORT_FILENAME=test-results.xml jest --verbose --passWithNoTests"
   },
   "dependencies": {
