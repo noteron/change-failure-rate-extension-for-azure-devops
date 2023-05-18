@@ -1,4 +1,4 @@
-import * as React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import * as SDK from "azure-devops-extension-sdk";
 import {
   CommonServiceIds,
@@ -11,7 +11,6 @@ import { BuildRestClient } from "azure-devops-extension-api/Build";
 import { Header, TitleSize } from "azure-devops-ui/Header";
 import { IHeaderCommandBarItem } from "azure-devops-ui/HeaderCommandBar";
 import { Page } from "azure-devops-ui/Page";
-import { Tab, TabBar, TabSize } from "azure-devops-ui/Tabs";
 
 import { showRootComponent } from "../../Common";
 
@@ -24,17 +23,13 @@ interface IHubContentState {
   data?: string;
 }
 
-class HubContent extends React.Component<{}, IHubContentState> {
-  constructor(props: {}) {
-    super(props);
+const HubContent = (): JSX.Element => {
+  const [state, setState] = useState<IHubContentState>({
+    selectedTabId: "overview",
+    fullScreenMode: false,
+  });
 
-    this.state = {
-      selectedTabId: "overview",
-      fullScreenMode: false,
-    };
-  }
-
-  private async tryGetSomeData() {
+  const tryGetSomeData = async () => {
     // TODO:
     // get
     /// environments
@@ -50,63 +45,33 @@ class HubContent extends React.Component<{}, IHubContentState> {
 
     const tags = build.tags;
 
-    this.setState((prev) => ({ ...prev, data: JSON.stringify(tags) }));
+    setState((prev) => ({ ...prev, data: JSON.stringify(tags) }));
 
     /// > job
     /// > build run
     /// > build run tag
-  }
-
-  public componentDidMount() {
-    SDK.init();
-    this.initializeFullScreenState();
-    this.tryGetSomeData();
-  }
-
-  public render(): JSX.Element {
-    const {
-      selectedTabId,
-      headerDescription,
-      useCompactPivots,
-      useLargeTitle,
-    } = this.state;
-
-    return (
-      <Page className="sample-hub flex-grow">
-        <Header
-          title="Sample Hub"
-          commandBarItems={this.getCommandBarItems()}
-          description={headerDescription}
-          titleSize={useLargeTitle ? TitleSize.Large : TitleSize.Medium}
-        />
-        <TabBar
-          onSelectedTabChanged={this.onSelectedTabChanged}
-          selectedTabId={selectedTabId}
-          tabSize={useCompactPivots ? TabSize.Compact : TabSize.Tall}
-        >
-          <Tab name="Overview" id="overview" />
-          <Tab name="Navigation" id="navigation" />
-          <Tab name="Extension Data" id="extensionData" />
-          <Tab name="Messages" id="messages" />
-        </TabBar>
-        {this.state.data ?? "no data"}
-      </Page>
-    );
-  }
-
-  private onSelectedTabChanged = (newTabId: string) => {
-    this.setState({
-      selectedTabId: newTabId,
-    });
   };
 
-  private getCommandBarItems(): IHeaderCommandBarItem[] {
+  useEffect(() => {
+    SDK.init();
+    initializeFullScreenState();
+    tryGetSomeData();
+  }, []);
+
+  const onSelectedTabChanged = (newTabId: string) => {
+    setState(prev => ({
+      ...prev,
+      selectedTabId: newTabId,
+    }));
+  };
+
+  const commandBarItems = useMemo((): IHeaderCommandBarItem[] => {
     return [
       {
         id: "panel",
         text: "Panel",
         onActivate: () => {
-          this.onPanelClick();
+          onPanelClick();
         },
         iconProps: {
           iconName: "Add",
@@ -120,7 +85,7 @@ class HubContent extends React.Component<{}, IHubContentState> {
         id: "messageDialog",
         text: "Message",
         onActivate: () => {
-          this.onMessagePromptClick();
+          onMessagePromptClick();
         },
         tooltipProps: {
           text: "Open a simple message dialog",
@@ -128,30 +93,30 @@ class HubContent extends React.Component<{}, IHubContentState> {
       },
       {
         id: "fullScreen",
-        ariaLabel: this.state.fullScreenMode
+        ariaLabel: state.fullScreenMode
           ? "Exit full screen mode"
           : "Enter full screen mode",
         iconProps: {
-          iconName: this.state.fullScreenMode ? "BackToWindow" : "FullScreen",
+          iconName: state.fullScreenMode ? "BackToWindow" : "FullScreen",
         },
         onActivate: () => {
-          this.onToggleFullScreenMode();
+          onToggleFullScreenMode();
         },
       },
       {
         id: "customDialog",
         text: "Custom Dialog",
         onActivate: () => {
-          this.onCustomPromptClick();
+          onCustomPromptClick();
         },
         tooltipProps: {
           text: "Open a dialog with custom extension content",
         },
       },
     ];
-  }
+  }, []);
 
-  private async onMessagePromptClick(): Promise<void> {
+  const onMessagePromptClick = async (): Promise<void> => {
     const dialogService = await SDK.getService<IHostPageLayoutService>(
       CommonServiceIds.HostPageLayoutService
     );
@@ -159,12 +124,12 @@ class HubContent extends React.Component<{}, IHubContentState> {
       showCancel: true,
       title: "Message dialog",
       onClose: (result) => {
-        this.setState({ useLargeTitle: result });
+        setState(prev => ({ ...prev, useLargeTitle: result }));
       },
     });
   }
 
-  private async onCustomPromptClick(): Promise<void> {
+  const onCustomPromptClick = async (): Promise<void> => {
     const dialogService = await SDK.getService<IHostPageLayoutService>(
       CommonServiceIds.HostPageLayoutService
     );
@@ -174,18 +139,18 @@ class HubContent extends React.Component<{}, IHubContentState> {
         title: "Custom dialog",
         configuration: {
           message: "Use compact pivots?",
-          initialValue: this.state.useCompactPivots,
+          initialValue: state.useCompactPivots,
         },
         onClose: (result) => {
           if (result !== undefined) {
-            this.setState({ useCompactPivots: result });
+            setState(prev => ({ ...prev, useCompactPivots: result }));
           }
         },
       }
     );
   }
 
-  private async onPanelClick(): Promise<void> {
+  const onPanelClick = async (): Promise<void> => {
     const panelService = await SDK.getService<IHostPageLayoutService>(
       CommonServiceIds.HostPageLayoutService
     );
@@ -196,40 +161,58 @@ class HubContent extends React.Component<{}, IHubContentState> {
         description: "Description of my panel",
         configuration: {
           message: "Show header description?",
-          initialValue: !!this.state.headerDescription,
+          initialValue: !!state.headerDescription,
         },
         onClose: (result) => {
           if (result !== undefined) {
-            this.setState({
+            setState(prev => ({
+              ...prev,
               headerDescription: result
                 ? "This is a header description"
                 : undefined,
-            });
+            }));
           }
         },
       }
     );
   }
 
-  private async initializeFullScreenState() {
+  const initializeFullScreenState = async () => {
     const layoutService = await SDK.getService<IHostPageLayoutService>(
       CommonServiceIds.HostPageLayoutService
     );
     const fullScreenMode = await layoutService.getFullScreenMode();
-    if (fullScreenMode !== this.state.fullScreenMode) {
-      this.setState({ fullScreenMode });
+    if (fullScreenMode !== state.fullScreenMode) {
+      setState(prev => ({ ...prev, fullScreenMode }));
     }
   }
 
-  private async onToggleFullScreenMode(): Promise<void> {
-    const fullScreenMode = !this.state.fullScreenMode;
-    this.setState({ fullScreenMode });
+  const onToggleFullScreenMode = async (): Promise<void> => {
+    const fullScreenMode = !state.fullScreenMode;
+    setState(prev => ({ ...prev, fullScreenMode }));
 
     const layoutService = await SDK.getService<IHostPageLayoutService>(
       CommonServiceIds.HostPageLayoutService
     );
     layoutService.setFullScreenMode(fullScreenMode);
   }
-}
+
+  const {
+    headerDescription,
+    useLargeTitle,
+  } = state;
+
+  return (
+    <Page className="sample-hub flex-grow">
+      <Header
+        title="Sample Hub"
+        commandBarItems={commandBarItems}
+        description={headerDescription}
+        titleSize={useLargeTitle ? TitleSize.Large : TitleSize.Medium}
+      />
+      {state.data ?? "no data"}
+    </Page>
+  );
+  }
 
 showRootComponent(<HubContent />);
