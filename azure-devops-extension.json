@@ -2,16 +2,10 @@
   "manifestVersion": 1,
   "id": "change-failure-rate-graph",
   "publisher": "SpanaCopita",
-  "version": "1.0.12",
+  "version": "1.0.25",
   "name": "Change failure rate graph",
   "description": "Azure DevOps Extension",
-  "categories": [
-    "Azure Repos",
-    "Azure Boards",
-    "Azure Pipelines",
-    "Azure Test Plans",
-    "Azure Artifacts"
-  ],
+  "categories": ["Azure Pipelines"],
   "targets": [
     {
       "id": "Microsoft.VisualStudio.Services"
@@ -35,5 +29,6 @@
       "path": "dist",
       "addressable": true
     }
-  ]
+  ],
+  "scopes": ["vso.environment_manage", "vso.build"]
 }

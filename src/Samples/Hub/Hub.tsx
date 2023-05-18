@@ -2,8 +2,11 @@ import * as React from "react";
 import * as SDK from "azure-devops-extension-sdk";
 import {
   CommonServiceIds,
+  getClient,
   IHostPageLayoutService,
 } from "azure-devops-extension-api";
+import { TaskAgentRestClient } from "azure-devops-extension-api/TaskAgent";
+import { BuildRestClient } from "azure-devops-extension-api/Build";
 
 import { Header, TitleSize } from "azure-devops-ui/Header";
 import { IHeaderCommandBarItem } from "azure-devops-ui/HeaderCommandBar";
@@ -18,6 +21,7 @@ interface IHubContentState {
   headerDescription?: string;
   useLargeTitle?: boolean;
   useCompactPivots?: boolean;
+  data?: string;
 }
 
 class HubContent extends React.Component<{}, IHubContentState> {
@@ -30,9 +34,33 @@ class HubContent extends React.Component<{}, IHubContentState> {
     };
   }
 
+  private async tryGetSomeData() {
+    // TODO:
+    // get
+    /// environments
+    const runs = await getClient(
+      TaskAgentRestClient
+    ).getEnvironmentDeploymentExecutionRecords("IT", 11);
+
+    const buildId = runs?.[0].owner.id;
+    if (!buildId) throw new Error("no build id");
+
+    const build = await getClient(BuildRestClient).getBuild("IT", buildId);
+    if (!build) throw new Error("cannot find build");
+
+    const tags = build.tags;
+
+    this.setState((prev) => ({ ...prev, data: JSON.stringify(tags) }));
+
+    /// > job
+    /// > build run
+    /// > build run tag
+  }
+
   public componentDidMount() {
     SDK.init();
     this.initializeFullScreenState();
+    this.tryGetSomeData();
   }
 
   public render(): JSX.Element {
@@ -61,7 +89,7 @@ class HubContent extends React.Component<{}, IHubContentState> {
           <Tab name="Extension Data" id="extensionData" />
           <Tab name="Messages" id="messages" />
         </TabBar>
-        pageContent
+        {this.state.data ?? "no data"}
       </Page>
     );
   }
