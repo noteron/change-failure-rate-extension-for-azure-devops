@@ -13,6 +13,7 @@
     "url": ""
   },
   "scripts": {
+    "ngrok": "ngrok http --domain=devops-extension.ngrok.dev 3000",
     "clean": "rimraf ./dist",
     "compile": "npm run clean && npm run test && webpack --mode production",
     "compile:dev": "npm run clean && npm run test && webpack --mode development",

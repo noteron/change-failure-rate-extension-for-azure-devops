@@ -1,39 +1,39 @@
 {
-    "manifestVersion": 1,
-    "id": "change-failure-rate-graph",
-    "publisher": "ZackariasMontell",
-    "version": "1.0.1",
-    "name": "Change failure rate graph",
-    "description": "Azure DevOps Extension",
-    "categories": [
-        "Azure Repos",
-        "Azure Boards",
-        "Azure Pipelines",
-        "Azure Test Plans",
-        "Azure Artifacts"
-    ],
-    "targets": [
-        {
-            "id": "Microsoft.VisualStudio.Services"
-        }
-    ],
-    "baseUri": "https://localhost",
-    "icons": {
-        "default": "logo.png"
+  "manifestVersion": 1,
+  "id": "change-failure-rate-graph",
+  "publisher": "SpanaCopita",
+  "version": "1.0.4",
+  "name": "Change failure rate graph",
+  "description": "Azure DevOps Extension",
+  "categories": [
+    "Azure Repos",
+    "Azure Boards",
+    "Azure Pipelines",
+    "Azure Test Plans",
+    "Azure Artifacts"
+  ],
+  "targets": [
+    {
+      "id": "Microsoft.VisualStudio.Services"
+    }
+  ],
+  "baseUri": "https://devops-extension.ngrok.dev",
+  "icons": {
+    "default": "logo.png"
+  },
+  "content": {
+    "details": {
+      "path": "overview.md"
+    }
+  },
+  "files": [
+    {
+      "path": "static",
+      "addressable": true
     },
-    "content": {
-        "details": {
-            "path": "overview.md"
-        }
-    },
-    "files": [
-        {
-            "path": "static",
-            "addressable": true
-        },
-        {
-            "path": "dist",
-            "addressable": true
-        }
-    ]
+    {
+      "path": "dist",
+      "addressable": true
+    }
+  ]
 }
