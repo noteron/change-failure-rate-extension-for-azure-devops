@@ -13,6 +13,8 @@
     "url": ""
   },
   "scripts": {
+    "dev": "chokidar \"src/**/*.(js|ts|tsx|html|json)\" -c \"npm run build && npm run serve\"",
+    "serve": "serve -p 3000",
     "ngrok": "ngrok http --domain=devops-extension.ngrok.dev 3000",
     "clean": "rimraf ./dist",
     "compile": "npm run clean && npm run test && webpack --mode production",
@@ -39,6 +41,7 @@
     "@types/react": "~16.8.2",
     "@types/react-dom": "~16.8.0",
     "base64-inline-loader": "^2.0.1",
+    "chokidar-cli": "^3.0.0",
     "copy-webpack-plugin": "^7.0.0",
     "cross-env": "^7.0.3",
     "css-loader": "^6.7.1",
@@ -47,6 +50,7 @@
     "rimraf": "~2.6.2",
     "sass": "^1.62.1",
     "sass-loader": "^13.0.0",
+    "serve": "^14.2.0",
     "style-loader": "~0.23.1",
     "tfx-cli": "^0.11.0",
     "ts-jest": "^26.1.1",
