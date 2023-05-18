@@ -16,7 +16,7 @@
     "dev": "chokidar \"src/**/*.(js|ts|tsx|html|json)\" -c \"npm run build && npm run serve\" --initial",
     "serve": "serve -p 3000",
     "ngrok": "ngrok http --domain=devops-extension.ngrok.dev 3000",
-    "clean": "rimraf ./dist",
+    "clean": "rimraf ./dist && rimraf ./*.vsix",
     "compile": "npm run clean && npm run test && webpack --mode production",
     "compile:dev": "npm run clean && npm run test && webpack --mode development",
     "build": "npm run compile",
