@@ -12,7 +12,7 @@
       ],
       "properties": {
         "name": "Release measurements",
-        "uri": "dist/Hub/Hub.html",
+        "uri": "dist/Hub.html",
         "icon": "asset://static/sample-icon.png",
         "supportsMobile": true
       }

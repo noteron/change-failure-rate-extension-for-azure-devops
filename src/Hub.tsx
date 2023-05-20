@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import * as SDK from "azure-devops-extension-sdk";
 import {
   CommonServiceIds,
@@ -12,7 +12,7 @@ import { Header, TitleSize } from "azure-devops-ui/Header";
 import { IHeaderCommandBarItem } from "azure-devops-ui/HeaderCommandBar";
 import { Page } from "azure-devops-ui/Page";
 
-import { showRootComponent } from "../../Common";
+import { showRootComponent } from "./Common";
 
 interface IHubContentState {
   selectedTabId: string;
@@ -59,7 +59,7 @@ const HubContent = (): JSX.Element => {
   }, []);
 
   const onSelectedTabChanged = (newTabId: string) => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       selectedTabId: newTabId,
     }));
@@ -83,7 +83,7 @@ const HubContent = (): JSX.Element => {
       },
       {
         id: "messageDialog",
-        text: "Message",
+        text: "arstarst",
         onActivate: () => {
           onMessagePromptClick();
         },
@@ -124,10 +124,10 @@ const HubContent = (): JSX.Element => {
       showCancel: true,
       title: "Message dialog",
       onClose: (result) => {
-        setState(prev => ({ ...prev, useLargeTitle: result }));
+        setState((prev) => ({ ...prev, useLargeTitle: result }));
       },
     });
-  }
+  };
 
   const onCustomPromptClick = async (): Promise<void> => {
     const dialogService = await SDK.getService<IHostPageLayoutService>(
@@ -143,12 +143,12 @@ const HubContent = (): JSX.Element => {
         },
         onClose: (result) => {
           if (result !== undefined) {
-            setState(prev => ({ ...prev, useCompactPivots: result }));
+            setState((prev) => ({ ...prev, useCompactPivots: result }));
           }
         },
       }
     );
-  }
+  };
 
   const onPanelClick = async (): Promise<void> => {
     const panelService = await SDK.getService<IHostPageLayoutService>(
@@ -165,7 +165,7 @@ const HubContent = (): JSX.Element => {
         },
         onClose: (result) => {
           if (result !== undefined) {
-            setState(prev => ({
+            setState((prev) => ({
               ...prev,
               headerDescription: result
                 ? "This is a header description"
@@ -175,7 +175,7 @@ const HubContent = (): JSX.Element => {
         },
       }
     );
-  }
+  };
 
   const initializeFullScreenState = async () => {
     const layoutService = await SDK.getService<IHostPageLayoutService>(
@@ -183,24 +183,25 @@ const HubContent = (): JSX.Element => {
     );
     const fullScreenMode = await layoutService.getFullScreenMode();
     if (fullScreenMode !== state.fullScreenMode) {
-      setState(prev => ({ ...prev, fullScreenMode }));
+      setState((prev) => ({ ...prev, fullScreenMode }));
     }
-  }
+  };
 
-  const onToggleFullScreenMode = async (): Promise<void> => {
-    const fullScreenMode = !state.fullScreenMode;
-    setState(prev => ({ ...prev, fullScreenMode }));
+  const onToggleFullScreenMode = useCallback(async (): Promise<void> => {
+    setState((prev) => ({ ...prev, fullScreenMode: !prev.fullScreenMode }));
+  }, []);
 
-    const layoutService = await SDK.getService<IHostPageLayoutService>(
-      CommonServiceIds.HostPageLayoutService
-    );
-    layoutService.setFullScreenMode(fullScreenMode);
-  }
+  useEffect(() => {
+    const setFullScreenModeAsync = async () => {
+      const layoutService = await SDK.getService<IHostPageLayoutService>(
+        CommonServiceIds.HostPageLayoutService
+      );
+      layoutService.setFullScreenMode(state.fullScreenMode);
+    };
+    setFullScreenModeAsync();
+  }, [state.fullScreenMode]);
 
-  const {
-    headerDescription,
-    useLargeTitle,
-  } = state;
+  const { headerDescription, useLargeTitle } = state;
 
   return (
     <Page className="sample-hub flex-grow">
@@ -213,6 +214,6 @@ const HubContent = (): JSX.Element => {
       {state.data ?? "no data"}
     </Page>
   );
-  }
+};
 
 showRootComponent(<HubContent />);

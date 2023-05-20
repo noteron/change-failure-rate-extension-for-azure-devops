@@ -13,8 +13,8 @@
     "url": ""
   },
   "scripts": {
-    "dev": "chokidar \"src/**/*.(js|ts|tsx|html|json)\" -c \"npm run build:dev && npm run serve\" --initial",
-    "serve": "serve -p 3000",
+    "dev": "webpack-dev-server ",
+    "dev:http": "webpack-dev-server --hot --progress --static ./ --port 3000",
     "ngrok": "ngrok http --domain=devops-extension.ngrok.dev 3000",
     "clean": "rimraf ./dist && rimraf ./*.vsix",
     "compile": "npm run clean && npm run test && webpack --mode production",
@@ -22,8 +22,8 @@
     "build": "npm run compile",
     "build:dev": "npm run compile:dev && npm run postbuild",
     "postbuild": "npm run package -- --rev-version",
-    "package": "tfx extension create --manifest-globs azure-devops-extension.json src/Contributions/**/*.json",
-    "publish": "tfx extension publish --manifest-globs azure-devops-extension.json src/Contributions/**/*.json",
+    "package": "tfx extension create --manifest-globs azure-devops-extension.json src/Hub.json",
+    "publish": "tfx extension publish --manifest-globs azure-devops-extension.json src/Hub.json",
     "test": "cross-env TEST_REPORT_FILENAME=test-results.xml jest --verbose --passWithNoTests"
   },
   "dependencies": {
@@ -34,30 +34,29 @@
     "react-dom": "~16.13.1"
   },
   "devDependencies": {
-    "@babel/core": "^7.21.8",
     "@testing-library/jest-dom": "^5.11.0",
     "@testing-library/react": "^10.4.4",
     "@types/jest": "^26.0.3",
     "@types/react": "~16.8.2",
     "@types/react-dom": "~16.8.0",
     "base64-inline-loader": "^2.0.1",
-    "chokidar-cli": "^3.0.0",
     "copy-webpack-plugin": "^7.0.0",
     "cross-env": "^7.0.3",
     "css-loader": "^6.7.1",
+    "file-loader": "^6.2.0",
     "jest": "^26.1.0",
     "jest-junit-reporter": "^1.1.0",
-    "rimraf": "~2.6.2",
+    "rimraf": "^3.0.2",
     "sass": "^1.62.1",
     "sass-loader": "^13.0.0",
-    "serve": "^14.2.0",
-    "style-loader": "~0.23.1",
-    "tfx-cli": "^0.11.0",
+    "style-loader": "^1.2.1",
+    "tfx-cli": "^0.12.0",
     "ts-jest": "^26.1.1",
-    "ts-loader": "~5.2.2",
-    "typescript": "^3.9.6",
-    "webpack": "^5.23.0",
-    "webpack-cli": "^4.5.0"
+    "ts-loader": "^9.4.2",
+    "typescript": "^5.0.4",
+    "webpack": "^5.83.1",
+    "webpack-cli": "^5.1.1",
+    "webpack-dev-server": "^4.15.0"
   },
   "jest": {
     "transform": {
@@ -82,11 +81,6 @@
       "ts-jest": {
         "tsconfig": "tsconfig.test.json"
       }
-    }
-  },
-  "overrides": {
-    "tfx-cli": {
-      "xml2js": "0.5.0"
     }
   }
 }
