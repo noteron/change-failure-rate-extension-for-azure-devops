@@ -6,7 +6,7 @@ import {
   IHostPageLayoutService,
 } from "azure-devops-extension-api";
 import { TaskAgentRestClient } from "azure-devops-extension-api/TaskAgent";
-import { BuildRestClient } from "azure-devops-extension-api/Build";
+import { Build, BuildRestClient } from "azure-devops-extension-api/Build";
 
 import { Header, TitleSize } from "azure-devops-ui/Header";
 import { IHeaderCommandBarItem } from "azure-devops-ui/HeaderCommandBar";
@@ -14,8 +14,13 @@ import { Page } from "azure-devops-ui/Page";
 
 import { showRootComponent } from "./Common";
 
+const PROJECT_NAME = "IT";
+const ENVIRONMENT_ID = 11;
+
+const NORMAL_RELEASE_REGEX = /^v\d+\.0$/;
+const VALID_RELEASE_REGEX = /^v\d+\.\d+$/;
+
 interface IHubContentState {
-  selectedTabId: string;
   fullScreenMode: boolean;
   headerDescription?: string;
   useLargeTitle?: boolean;
@@ -23,47 +28,88 @@ interface IHubContentState {
   data?: string;
 }
 
+enum ReleaseType {
+  Normal = "Normal",
+  Hotfix = "Hotfix",
+}
+
 const HubContent = (): JSX.Element => {
   const [state, setState] = useState<IHubContentState>({
-    selectedTabId: "overview",
     fullScreenMode: false,
   });
 
-  const tryGetSomeData = async () => {
-    // TODO:
-    // get
-    /// environments
+  const fetchReleasesForEnvironment = async () => {
     const runs = await getClient(
       TaskAgentRestClient
-    ).getEnvironmentDeploymentExecutionRecords("IT", 11);
+    ).getEnvironmentDeploymentExecutionRecords(PROJECT_NAME, ENVIRONMENT_ID);
+    if (!runs) throw new Error("no build runs found");
 
-    const buildId = runs?.[0].owner.id;
-    if (!buildId) throw new Error("no build id");
+    const buildIds = runs.map((r) => r.owner.id);
+    const builds = await getClient(BuildRestClient).getBuilds(
+      PROJECT_NAME,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      buildIds
+    );
 
-    const build = await getClient(BuildRestClient).getBuild("IT", buildId);
-    if (!build) throw new Error("cannot find build");
+    const buildsByReleaseType: Record<ReleaseType, Build[]> = builds.reduce<
+      Record<ReleaseType, Build[]>
+    >(
+      (dictionary, currentBuild) => {
+        if (currentBuild.tags.length) {
+          currentBuild.tags.map((t) => {
+            const isValidVersionTag = VALID_RELEASE_REGEX.test(t);
+            if (!isValidVersionTag) return;
+            const isNormalRelease = NORMAL_RELEASE_REGEX.test(t);
+            const releaseType: ReleaseType = isNormalRelease
+              ? ReleaseType.Normal
+              : ReleaseType.Hotfix;
 
-    const tags = build.tags;
+            dictionary[releaseType] = [
+              currentBuild,
+              ...dictionary[releaseType],
+            ];
+          });
+        }
+        return dictionary;
+      },
+      {
+        [ReleaseType.Normal]: [],
+        [ReleaseType.Hotfix]: [],
+      }
+    );
 
-    setState((prev) => ({ ...prev, data: JSON.stringify(tags) }));
+    const numberOfReleasesPerType = Object.keys(buildsByReleaseType).map(
+      (type) => `${type}: ${buildsByReleaseType[type as ReleaseType].length}`
+    );
+    console.log(numberOfReleasesPerType);
 
-    /// > job
-    /// > build run
-    /// > build run tag
+    setState((prev) => ({
+      ...prev,
+      data: JSON.stringify(numberOfReleasesPerType),
+    }));
   };
 
   useEffect(() => {
     SDK.init();
     initializeFullScreenState();
-    tryGetSomeData();
+    fetchReleasesForEnvironment();
   }, []);
-
-  const onSelectedTabChanged = (newTabId: string) => {
-    setState((prev) => ({
-      ...prev,
-      selectedTabId: newTabId,
-    }));
-  };
 
   const commandBarItems = useMemo((): IHeaderCommandBarItem[] => {
     return [
