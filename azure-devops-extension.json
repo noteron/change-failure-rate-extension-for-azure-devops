@@ -30,5 +30,5 @@
       "addressable": true
     }
   ],
-  "scopes": ["vso.environment_manage", "vso.build"]
+  "scopes": ["vso.environment_manage", "vso.build", "vso.work"]
 }

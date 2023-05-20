@@ -5,8 +5,12 @@ import {
   getClient,
   IHostPageLayoutService,
 } from "azure-devops-extension-api";
-import { TaskAgentRestClient } from "azure-devops-extension-api/TaskAgent";
+import {
+  EnvironmentInstance,
+  TaskAgentRestClient,
+} from "azure-devops-extension-api/TaskAgent";
 import { Build, BuildRestClient } from "azure-devops-extension-api/Build";
+import { WorkRestClient } from "azure-devops-extension-api/Work";
 
 import { Header, TitleSize } from "azure-devops-ui/Header";
 import { IHeaderCommandBarItem } from "azure-devops-ui/HeaderCommandBar";
@@ -16,6 +20,7 @@ import { showRootComponent } from "./Common";
 
 const PROJECT_NAME = "IT";
 const ENVIRONMENT_ID = 11;
+const TEAM_NAME = "Web";
 
 const NORMAL_RELEASE_REGEX = /^v\d+\.0$/;
 const VALID_RELEASE_REGEX = /^v\d+\.\d+$/;
@@ -37,8 +42,26 @@ const HubContent = (): JSX.Element => {
   const [state, setState] = useState<IHubContentState>({
     fullScreenMode: false,
   });
+  const [environment, setEnvironment] = useState<EnvironmentInstance>();
+
+  const fetchIterationsForTeam = async () => {
+    const iterations = await getClient(WorkRestClient).getTeamIterations({
+      project: PROJECT_NAME,
+      team: TEAM_NAME,
+      projectId: "",
+      teamId: "",
+    });
+    console.log(iterations);
+  };
 
   const fetchReleasesForEnvironment = async () => {
+    const environment = await getClient(TaskAgentRestClient).getEnvironmentById(
+      PROJECT_NAME,
+      ENVIRONMENT_ID
+    );
+    if (!environment) throw new Error("no environment found");
+    setEnvironment(environment);
+
     const runs = await getClient(
       TaskAgentRestClient
     ).getEnvironmentDeploymentExecutionRecords(PROJECT_NAME, ENVIRONMENT_ID);
@@ -108,6 +131,8 @@ const HubContent = (): JSX.Element => {
   useEffect(() => {
     SDK.init();
     initializeFullScreenState();
+    // TODO: Redeploy extension to allow fetching of iterations
+    // fetchIterationsForTeam(); 
     fetchReleasesForEnvironment();
   }, []);
 
@@ -252,12 +277,14 @@ const HubContent = (): JSX.Element => {
   return (
     <Page className="sample-hub flex-grow">
       <Header
-        title="Sample Hub"
+        title={environment?.name ?? ""}
         commandBarItems={commandBarItems}
         description={headerDescription}
         titleSize={useLargeTitle ? TitleSize.Large : TitleSize.Medium}
       />
-      {state.data ?? "no data"}
+      <div className="page-content">
+        <div>{state.data}</div>
+      </div>
     </Page>
   );
 };
