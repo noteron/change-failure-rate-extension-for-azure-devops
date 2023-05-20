@@ -12,7 +12,7 @@ import { Header, TitleSize } from "azure-devops-ui/Header";
 import { IHeaderCommandBarItem } from "azure-devops-ui/HeaderCommandBar";
 import { Page } from "azure-devops-ui/Page";
 
-import { showRootComponent } from "../../Common";
+import { showRootComponent } from "./Common";
 
 interface IHubContentState {
   selectedTabId: string;
@@ -83,7 +83,7 @@ const HubContent = (): JSX.Element => {
       },
       {
         id: "messageDialog",
-        text: "Message",
+        text: "arstarst",
         onActivate: () => {
           onMessagePromptClick();
         },

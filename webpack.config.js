@@ -1,29 +1,34 @@
 const path = require("path");
-const fs = require("fs");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 
-// Webpack entry points. Mapping from resulting bundle name to the source file entry.
-const entries = {};
-
-// Loop through subfolders in the "Contributions" folder and add an entry for each one
-const contributionsDir = path.join(__dirname, "src/Contributions");
-fs.readdirSync(contributionsDir).filter((dir) => {
-  if (fs.statSync(path.join(contributionsDir, dir)).isDirectory()) {
-    entries[dir] =
-      "./" +
-      path.relative(process.cwd(), path.join(contributionsDir, dir, dir));
-  }
-});
 
 module.exports = {
+  devServer: {
+    devMiddleware:{
+      writeToDisk: true,
+    },
+    hot: true,
+    client: {
+      progress: true
+    },
+    port: 3000,
+    server: 'https',
+    static: {
+      directory: process.cwd(),
+    },
+  },
   mode: "production",
   target: "web",
   optimization: {
     minimize: true,
   },
-  entry: entries,
+  performance: {
+    hints: false
+  },
+  entry: {Hub: "./" + path.relative(process.cwd(), path.join(__dirname, "src",  "Hub.tsx"))},
   output: {
-    filename: "[name]/[name].js",
+    filename: "[name].js",
+    path: path.resolve(__dirname, 'dist')
   },
   devtool: "inline-source-map",
   resolve: {
@@ -68,7 +73,10 @@ module.exports = {
   },
   plugins: [
     new CopyWebpackPlugin({
-      patterns: [{ from: "**/*.html", context: "src/Contributions" }],
+      patterns: [{ from: "**/*.html", to: "./", context: "src" },
+      { from: "**/*.png", to: "./static", context: "static" },
+      { from: "./azure-devops-extension.json", to: "azure-devops-extension.json" },
+      { from: "./overview.md", to: "./" },],
     }),
   ],
 };
