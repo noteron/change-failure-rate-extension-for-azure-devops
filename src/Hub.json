@@ -13,7 +13,7 @@
       "properties": {
         "name": "Release measurements",
         "uri": "dist/Hub.html",
-        "icon": "asset://static/sample-icon.png",
+        "icon": "asset://static/youcantake-icon.png",
         "supportsMobile": true
       }
     }

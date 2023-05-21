@@ -10,11 +10,18 @@ import {
   TaskAgentRestClient,
 } from "azure-devops-extension-api/TaskAgent";
 import { Build, BuildRestClient } from "azure-devops-extension-api/Build";
-import { WorkRestClient } from "azure-devops-extension-api/Work";
+import {
+  TeamSettingsIteration,
+  TimeFrame,
+  WorkRestClient,
+} from "azure-devops-extension-api/Work";
 
 import { Header, TitleSize } from "azure-devops-ui/Header";
 import { IHeaderCommandBarItem } from "azure-devops-ui/HeaderCommandBar";
 import { Page } from "azure-devops-ui/Page";
+import { Card } from "azure-devops-ui/Card";
+import { MessageCard, MessageCardSeverity } from "azure-devops-ui/MessageCard";
+import { Pill, PillSize } from "azure-devops-ui/Pill";
 
 import { showRootComponent } from "./Common";
 
@@ -22,15 +29,15 @@ const PROJECT_NAME = "IT";
 const ENVIRONMENT_ID = 11;
 const TEAM_NAME = "Web";
 
+const NUMBER_OF_ITERATIONS = 5;
+
 const NORMAL_RELEASE_REGEX = /^v\d+\.0$/;
 const VALID_RELEASE_REGEX = /^v\d+\.\d+$/;
 
 interface IHubContentState {
   fullScreenMode: boolean;
   headerDescription?: string;
-  useLargeTitle?: boolean;
   useCompactPivots?: boolean;
-  data?: string;
 }
 
 enum ReleaseType {
@@ -43,6 +50,10 @@ const HubContent = (): JSX.Element => {
     fullScreenMode: false,
   });
   const [environment, setEnvironment] = useState<EnvironmentInstance>();
+  const [iterations, setIterations] = useState<TeamSettingsIteration[]>([]);
+  const [buildsByReleaseType, setBuildsByReleaseType] =
+    useState<Record<ReleaseType, Build[]>>();
+  const [changeFailureRate, setChangeFailureRate] = useState<number>();
 
   const fetchIterationsForTeam = async () => {
     const iterations = await getClient(WorkRestClient).getTeamIterations({
@@ -51,7 +62,12 @@ const HubContent = (): JSX.Element => {
       projectId: "",
       teamId: "",
     });
-    console.log(iterations);
+    const pastAndPresentIterations = iterations
+      .filter(
+        (iteration) => iteration.attributes.timeFrame !== TimeFrame.Future
+      )
+      .slice(-NUMBER_OF_ITERATIONS);
+    setIterations(pastAndPresentIterations);
   };
 
   const fetchReleasesForEnvironment = async () => {
@@ -116,23 +132,23 @@ const HubContent = (): JSX.Element => {
         [ReleaseType.Hotfix]: [],
       }
     );
+    setBuildsByReleaseType(buildsByReleaseType);
 
-    const numberOfReleasesPerType = Object.keys(buildsByReleaseType).map(
-      (type) => `${type}: ${buildsByReleaseType[type as ReleaseType].length}`
-    );
-    console.log(numberOfReleasesPerType);
-
-    setState((prev) => ({
-      ...prev,
-      data: JSON.stringify(numberOfReleasesPerType),
-    }));
+    const numberOfReleasesPerType: Record<ReleaseType, number> = {
+      [ReleaseType.Normal]: buildsByReleaseType[ReleaseType.Normal].length,
+      [ReleaseType.Hotfix]: buildsByReleaseType[ReleaseType.Hotfix].length,
+    };
+    const changeFailureRate =
+      (numberOfReleasesPerType[ReleaseType.Hotfix] /
+        numberOfReleasesPerType[ReleaseType.Normal]) *
+      100;
+    setChangeFailureRate(changeFailureRate);
   };
 
   useEffect(() => {
     SDK.init();
     initializeFullScreenState();
-    // TODO: Redeploy extension to allow fetching of iterations
-    // fetchIterationsForTeam(); 
+    fetchIterationsForTeam();
     fetchReleasesForEnvironment();
   }, []);
 
@@ -194,9 +210,6 @@ const HubContent = (): JSX.Element => {
     dialogService.openMessageDialog("Use large title?", {
       showCancel: true,
       title: "Message dialog",
-      onClose: (result) => {
-        setState((prev) => ({ ...prev, useLargeTitle: result }));
-      },
     });
   };
 
@@ -272,18 +285,94 @@ const HubContent = (): JSX.Element => {
     setFullScreenModeAsync();
   }, [state.fullScreenMode]);
 
-  const { headerDescription, useLargeTitle } = state;
-
   return (
     <Page className="sample-hub flex-grow">
       <Header
         title={environment?.name ?? ""}
         commandBarItems={commandBarItems}
-        description={headerDescription}
-        titleSize={useLargeTitle ? TitleSize.Large : TitleSize.Medium}
+        description={state.headerDescription}
+        titleSize={TitleSize.Large}
+        separator={true}
       />
       <div className="page-content">
-        <div>{state.data}</div>
+        <MessageCard
+          className="flex-self-stretch margin-bottom-16"
+          severity={MessageCardSeverity.Info}
+        >
+          Change Failure Rate — The percentage of deployments causing a failure
+          in production
+        </MessageCard>
+        <Card
+          titleProps={{ text: "Change failure rate", ariaLevel: 3 }}
+          className="margin-bottom-16"
+        >
+          <div>
+            <div>{changeFailureRate}%</div>
+            <div>
+              During sprint X, how many of the releases lead to an incident?
+              Alt. during sprint X (and X sprints in the past), how many
+              incidents happened per release?
+            </div>
+          </div>
+        </Card>
+        <Card titleProps={{ text: "Last 5 iterations" }}>
+          {iterations.map((iteration) => {
+            if (!buildsByReleaseType) return undefined;
+
+            const releases: Record<ReleaseType, number> = {
+              [ReleaseType.Normal]: buildsByReleaseType[
+                ReleaseType.Normal
+              ].filter(
+                (build) =>
+                  build.startTime > iteration.attributes.startDate &&
+                  build.startTime < iteration.attributes.finishDate
+              ).length,
+              [ReleaseType.Hotfix]: buildsByReleaseType[
+                ReleaseType.Hotfix
+              ].filter(
+                (build) =>
+                  build.startTime > iteration.attributes.startDate &&
+                  build.startTime < iteration.attributes.finishDate
+              ).length,
+            };
+            return (
+              <div key={iteration.id} className="flex-grow">
+                <div className="flex-row">
+                  <div className="body-l">{iteration.name}</div>
+                  {iteration.attributes.timeFrame === TimeFrame.Current && (
+                    <Pill size={PillSize.compact} className="margin-left-8">
+                      Current
+                    </Pill>
+                  )}
+                </div>
+                <div className="flex-row flex-wrap">
+                  <div className="body-s">
+                    {iteration.attributes.startDate.toLocaleDateString(
+                      "en-US",
+                      {
+                        dateStyle: "medium",
+                      }
+                    )}
+                    &nbsp;-&nbsp;
+                  </div>
+                  <div className="body-s">
+                    {iteration.attributes.finishDate.toLocaleDateString(
+                      "en-US",
+                      {
+                        dateStyle: "medium",
+                      }
+                    )}
+                  </div>
+                </div>
+                <div className="flex-grow margin-top-8">
+                  <div>Normal releases: {releases.Normal}</div>
+                  <div>Hotfix releases: {releases.Hotfix}</div>
+                  <div>Ratio: {releases.Hotfix / releases.Normal}</div>
+                </div>
+              </div>
+            );
+          })}
+        </Card>
       </div>
     </Page>
   );
