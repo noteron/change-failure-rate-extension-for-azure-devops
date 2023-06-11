@@ -1,5 +1,15 @@
+@import "node_modules/azure-devops-ui/Core/_platformCommon.scss";
+
 #root {
     height: 100%;
     width: 100%;
     display: flex;
+}
+
+.blue-icon {
+  color: $communication-background;
+}
+
+.secondary-title {
+  color: $secondary-text;
 }

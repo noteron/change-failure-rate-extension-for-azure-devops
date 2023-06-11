@@ -20,8 +20,8 @@ import { Header, TitleSize } from "azure-devops-ui/Header";
 import { IHeaderCommandBarItem } from "azure-devops-ui/HeaderCommandBar";
 import { Page } from "azure-devops-ui/Page";
 import { Card } from "azure-devops-ui/Card";
-import { MessageCard, MessageCardSeverity } from "azure-devops-ui/MessageCard";
 import { Pill, PillSize } from "azure-devops-ui/Pill";
+import { Icon, IconSize } from "azure-devops-ui/Icon";
 
 import { showRootComponent } from "./Common";
 
@@ -194,28 +194,41 @@ const HubContent = (): JSX.Element => {
         buttonCount={3}
       />
       <div className="page-content">
-        <MessageCard
-          className="flex-self-stretch margin-bottom-16 margin-top-16"
-          severity={MessageCardSeverity.Info}
-        >
-          Change Failure Rate — The percentage of deployments causing a failure
-          in production
-        </MessageCard>
         <Card
           titleProps={{ text: "Change failure rate", ariaLevel: 3 }}
-          className="margin-bottom-16"
+          className="margin-bottom-16 margin-top-16 bolt-card-white"
         >
-          <div>
-            <div>{changeFailureRate}%</div>
-            <div>
-              During sprint X, how many of the releases lead to an incident?
-              Alt. during sprint X (and X sprints in the past), how many
-              incidents happened per release?
+          <div className="flex-grow">
+            <div className="flex-row">
+              <div className="flex-grow">
+                <div className="secondary-title">Ratio</div>
+                <div>{changeFailureRate}%</div>
+              </div>
+              <div className="flex-grow">
+                <div className="secondary-title">Normal releases</div>
+                <div>5</div>
+              </div>
+              <div className="flex-grow">
+                <div className="secondary-title">Hotfixes</div>
+                <div>11</div>
+              </div>
+            </div>
+
+            <div className="margin-top-16 body-s flex-row">
+              <Icon
+                iconName="Info"
+                className="margin-right-4 blue-icon"
+                size={IconSize.medium}
+              />
+              The percentage of deployments causing a failure in production
             </div>
           </div>
         </Card>
-        
-        <Card titleProps={{ text: "Last 5 iterations" }}>
+
+        <Card
+          titleProps={{ text: "Last 5 iterations" }}
+          className="bolt-card-white"
+        >
           {iterations.map((iteration) => {
             if (!buildsByReleaseType) return undefined;
 
@@ -237,7 +250,7 @@ const HubContent = (): JSX.Element => {
             };
             const noHotfixes = releases.Hotfix === 0;
             const noNormalReleases = releases.Normal === 0;
-            const ratio = noHotfixes 
+            const ratio = noHotfixes
               ? noNormalReleases
                 ? 0
                 : 0
