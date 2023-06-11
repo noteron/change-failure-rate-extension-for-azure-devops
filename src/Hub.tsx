@@ -22,6 +22,7 @@ import { Page } from "azure-devops-ui/Page";
 import { Card } from "azure-devops-ui/Card";
 import { Pill, PillSize } from "azure-devops-ui/Pill";
 import { Icon, IconSize } from "azure-devops-ui/Icon";
+import { Status, Statuses, StatusSize } from "azure-devops-ui/Status";
 
 import { showRootComponent } from "./Common";
 
@@ -296,10 +297,20 @@ const HubContent = (): JSX.Element => {
                     )}
                   </div>
                 </div>
-                <div className="flex-grow margin-top-8">
-                  <div>Normal releases: {releases.Release}</div>
-                  <div>Hotfix releases: {releases.Hotfix}</div>
-                  <div>Ratio: {ratio}%</div>
+                <div className="flex-grow margin-top-8 flex-row">
+                  <div className="margin-right-16 flex-row flex-center">
+                    <Icon iconName="Rocket" className="margin-right-4" />{releases.Release}
+                  </div>
+                  <div className="margin-right-16 flex-row flex-center">
+                    <Icon iconName="Error" className="margin-right-4" />{releases.Hotfix}
+                  </div>
+                  <div className="margin-right-16 flex-row flex-center">
+                    {ratio > 0 ? (
+                      <Status {...Statuses.Failed} size={StatusSize.s} className="margin-right-4" />
+                      ) : (
+                      <Status {...Statuses.Success} size={StatusSize.s} className="margin-right-4" />
+                    )}{ratio}%
+                  </div>
                 </div>
               </div>
             );
