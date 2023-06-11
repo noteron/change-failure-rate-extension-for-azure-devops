@@ -34,21 +34,13 @@ const NUMBER_OF_ITERATIONS = 5;
 const NORMAL_RELEASE_REGEX = /^v\d+\.0$/;
 const VALID_RELEASE_REGEX = /^v\d+\.\d+$/;
 
-interface IHubContentState {
-  fullScreenMode: boolean;
-  headerDescription?: string;
-  useCompactPivots?: boolean;
-}
-
 enum ReleaseType {
   Normal = "Normal",
   Hotfix = "Hotfix",
 }
 
 const HubContent = (): JSX.Element => {
-  const [state, setState] = useState<IHubContentState>({
-    fullScreenMode: false,
-  });
+  const [fullScreenMode, setFullScreen] = useState<boolean>(false);
   const [environment, setEnvironment] = useState<EnvironmentInstance>();
   const [iterations, setIterations] = useState<TeamSettingsIteration[]>([]);
   const [buildsByReleaseType, setBuildsByReleaseType] =
@@ -155,124 +147,32 @@ const HubContent = (): JSX.Element => {
   const commandBarItems = useMemo((): IHeaderCommandBarItem[] => {
     return [
       {
-        id: "panel",
-        text: "Panel",
-        onActivate: () => {
-          onPanelClick();
-        },
-        iconProps: {
-          iconName: "Add",
-        },
-        isPrimary: true,
-        tooltipProps: {
-          text: "Open a panel with custom extension content",
-        },
-      },
-      {
-        id: "messageDialog",
-        text: "arstarst",
-        onActivate: () => {
-          onMessagePromptClick();
-        },
-        tooltipProps: {
-          text: "Open a simple message dialog",
-        },
-      },
-      {
         id: "fullScreen",
-        ariaLabel: state.fullScreenMode
+        ariaLabel: fullScreenMode
           ? "Exit full screen mode"
           : "Enter full screen mode",
         iconProps: {
-          iconName: state.fullScreenMode ? "BackToWindow" : "FullScreen",
+          iconName: fullScreenMode ? "BackToWindow" : "FullScreen",
         },
         onActivate: () => {
           onToggleFullScreenMode();
         },
       },
-      {
-        id: "customDialog",
-        text: "Custom Dialog",
-        onActivate: () => {
-          onCustomPromptClick();
-        },
-        tooltipProps: {
-          text: "Open a dialog with custom extension content",
-        },
-      },
     ];
   }, []);
-
-  const onMessagePromptClick = async (): Promise<void> => {
-    const dialogService = await SDK.getService<IHostPageLayoutService>(
-      CommonServiceIds.HostPageLayoutService
-    );
-    dialogService.openMessageDialog("Use large title?", {
-      showCancel: true,
-      title: "Message dialog",
-    });
-  };
-
-  const onCustomPromptClick = async (): Promise<void> => {
-    const dialogService = await SDK.getService<IHostPageLayoutService>(
-      CommonServiceIds.HostPageLayoutService
-    );
-    dialogService.openCustomDialog<boolean | undefined>(
-      SDK.getExtensionContext().id + ".panel-content",
-      {
-        title: "Custom dialog",
-        configuration: {
-          message: "Use compact pivots?",
-          initialValue: state.useCompactPivots,
-        },
-        onClose: (result) => {
-          if (result !== undefined) {
-            setState((prev) => ({ ...prev, useCompactPivots: result }));
-          }
-        },
-      }
-    );
-  };
-
-  const onPanelClick = async (): Promise<void> => {
-    const panelService = await SDK.getService<IHostPageLayoutService>(
-      CommonServiceIds.HostPageLayoutService
-    );
-    panelService.openPanel<boolean | undefined>(
-      SDK.getExtensionContext().id + ".panel-content",
-      {
-        title: "My Panel",
-        description: "Description of my panel",
-        configuration: {
-          message: "Show header description?",
-          initialValue: !!state.headerDescription,
-        },
-        onClose: (result) => {
-          if (result !== undefined) {
-            setState((prev) => ({
-              ...prev,
-              headerDescription: result
-                ? "This is a header description"
-                : undefined,
-            }));
-          }
-        },
-      }
-    );
-  };
 
   const initializeFullScreenState = async () => {
     const layoutService = await SDK.getService<IHostPageLayoutService>(
       CommonServiceIds.HostPageLayoutService
     );
     const fullScreenMode = await layoutService.getFullScreenMode();
-    if (fullScreenMode !== state.fullScreenMode) {
-      setState((prev) => ({ ...prev, fullScreenMode }));
+    if (fullScreenMode !== fullScreenMode) {
+      setFullScreen((prev) => fullScreenMode);
     }
   };
 
   const onToggleFullScreenMode = useCallback(async (): Promise<void> => {
-    setState((prev) => ({ ...prev, fullScreenMode: !prev.fullScreenMode }));
+    setFullScreen((prev) => !prev);
   }, []);
 
   useEffect(() => {
@@ -280,23 +180,22 @@ const HubContent = (): JSX.Element => {
       const layoutService = await SDK.getService<IHostPageLayoutService>(
         CommonServiceIds.HostPageLayoutService
       );
-      layoutService.setFullScreenMode(state.fullScreenMode);
+      layoutService.setFullScreenMode(fullScreenMode);
     };
     setFullScreenModeAsync();
-  }, [state.fullScreenMode]);
+  }, [fullScreenMode]);
 
   return (
     <Page className="sample-hub flex-grow">
       <Header
         title={environment?.name ?? ""}
         commandBarItems={commandBarItems}
-        description={state.headerDescription}
         titleSize={TitleSize.Large}
-        separator={true}
+        buttonCount={3}
       />
       <div className="page-content">
         <MessageCard
-          className="flex-self-stretch margin-bottom-16"
+          className="flex-self-stretch margin-bottom-16 margin-top-16"
           severity={MessageCardSeverity.Info}
         >
           Change Failure Rate — The percentage of deployments causing a failure
