@@ -31,11 +31,14 @@ const TEAM_NAME = "Web";
 
 const NUMBER_OF_ITERATIONS = 5;
 
-const NORMAL_RELEASE_REGEX = /^v\d+\.0$/;
-const VALID_RELEASE_REGEX = /^v\d+\.\d+$/;
+enum ReleaseTags {
+  Release = "release",
+  Hotfix = "hotfix",
+  Rollback = "rollback",
+}
 
 enum ReleaseType {
-  Normal = "Normal",
+  Release = "Release",
   Hotfix = "Hotfix",
 }
 
@@ -46,6 +49,8 @@ const HubContent = (): JSX.Element => {
   const [buildsByReleaseType, setBuildsByReleaseType] =
     useState<Record<ReleaseType, Build[]>>();
   const [changeFailureRate, setChangeFailureRate] = useState<number>();
+  const [totalNormalReleases, setTotalNormalReleases] = useState<number>();
+  const [totalHotfixes, setTotalHotfixes] = useState<number>();
 
   const fetchIterationsForTeam = async () => {
     const iterations = await getClient(WorkRestClient).getTeamIterations({
@@ -104,11 +109,15 @@ const HubContent = (): JSX.Element => {
       (dictionary, currentBuild) => {
         if (currentBuild.tags.length) {
           currentBuild.tags.map((t) => {
-            const isValidVersionTag = VALID_RELEASE_REGEX.test(t);
-            if (!isValidVersionTag) return;
-            const isNormalRelease = NORMAL_RELEASE_REGEX.test(t);
+            const lowerCaseTag = t.toLowerCase();
+            const isNormalRelease = lowerCaseTag === ReleaseTags.Release;
+            const isHotfix =
+              lowerCaseTag === ReleaseTags.Hotfix ||
+              lowerCaseTag.includes(ReleaseTags.Rollback);
+            if (!isNormalRelease && !isHotfix) return;
+
             const releaseType: ReleaseType = isNormalRelease
-              ? ReleaseType.Normal
+              ? ReleaseType.Release
               : ReleaseType.Hotfix;
 
             dictionary[releaseType] = [
@@ -120,21 +129,23 @@ const HubContent = (): JSX.Element => {
         return dictionary;
       },
       {
-        [ReleaseType.Normal]: [],
+        [ReleaseType.Release]: [],
         [ReleaseType.Hotfix]: [],
       }
     );
     setBuildsByReleaseType(buildsByReleaseType);
 
     const numberOfReleasesPerType: Record<ReleaseType, number> = {
-      [ReleaseType.Normal]: buildsByReleaseType[ReleaseType.Normal].length,
+      [ReleaseType.Release]: buildsByReleaseType[ReleaseType.Release].length,
       [ReleaseType.Hotfix]: buildsByReleaseType[ReleaseType.Hotfix].length,
     };
     const changeFailureRate =
       (numberOfReleasesPerType[ReleaseType.Hotfix] /
-        numberOfReleasesPerType[ReleaseType.Normal]) *
+        numberOfReleasesPerType[ReleaseType.Release]) *
       100;
-    setChangeFailureRate(changeFailureRate);
+    setTotalNormalReleases(numberOfReleasesPerType[ReleaseType.Release]);
+    setTotalHotfixes(numberOfReleasesPerType[ReleaseType.Hotfix]);
+    setChangeFailureRate(isNaN(changeFailureRate) ? 0 : changeFailureRate);
   };
 
   useEffect(() => {
@@ -206,11 +217,11 @@ const HubContent = (): JSX.Element => {
               </div>
               <div className="flex-grow">
                 <div className="secondary-title">Normal releases</div>
-                <div>5</div>
+                <div>{totalNormalReleases}</div>
               </div>
               <div className="flex-grow">
                 <div className="secondary-title">Hotfixes</div>
-                <div>11</div>
+                <div>{totalHotfixes}</div>
               </div>
             </div>
 
@@ -233,8 +244,8 @@ const HubContent = (): JSX.Element => {
             if (!buildsByReleaseType) return undefined;
 
             const releases: Record<ReleaseType, number> = {
-              [ReleaseType.Normal]: buildsByReleaseType[
-                ReleaseType.Normal
+              [ReleaseType.Release]: buildsByReleaseType[
+                ReleaseType.Release
               ].filter(
                 (build) =>
                   build.startTime > iteration.attributes.startDate &&
@@ -249,12 +260,12 @@ const HubContent = (): JSX.Element => {
               ).length,
             };
             const noHotfixes = releases.Hotfix === 0;
-            const noNormalReleases = releases.Normal === 0;
+            const noNormalReleases = releases.Release === 0;
             const ratio = noHotfixes
               ? noNormalReleases
                 ? 0
                 : 0
-              : (releases.Hotfix / releases.Normal) * 100;
+              : (releases.Hotfix / releases.Release) * 100;
             return (
               <div key={iteration.id} className="flex-grow">
                 <div className="flex-row">
@@ -285,7 +296,7 @@ const HubContent = (): JSX.Element => {
                   </div>
                 </div>
                 <div className="flex-grow margin-top-8">
-                  <div>Normal releases: {releases.Normal}</div>
+                  <div>Normal releases: {releases.Release}</div>
                   <div>Hotfix releases: {releases.Hotfix}</div>
                   <div>Ratio: {ratio}%</div>
                 </div>
