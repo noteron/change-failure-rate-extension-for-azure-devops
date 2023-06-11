@@ -208,7 +208,7 @@ const HubContent = (): JSX.Element => {
       <div className="page-content">
         <Card
           titleProps={{ text: "Change failure rate", ariaLevel: 3 }}
-          className="margin-bottom-16 margin-top-16 bolt-card-white"
+          className="margin-top-16 bolt-card-white"
         >
           <div className="flex-grow">
             <div className="flex-row">
@@ -240,7 +240,7 @@ const HubContent = (): JSX.Element => {
 
         <Card
           titleProps={{ text: "Last 5 iterations" }}
-          className="bolt-card-white"
+          className="margin-top-16 bolt-card-white"
         >
           {iterations.map((iteration) => {
             if (!buildsByReleaseType) return undefined;
@@ -299,22 +299,36 @@ const HubContent = (): JSX.Element => {
                 </div>
                 <div className="flex-grow margin-top-8 flex-row">
                   <div className="margin-right-16 flex-row flex-center">
-                    <Icon iconName="Rocket" className="margin-right-4" />{releases.Release}
+                    <Icon iconName="Rocket" className="margin-right-4" />
+                    {releases.Release}
                   </div>
                   <div className="margin-right-16 flex-row flex-center">
-                    <Icon iconName="Error" className="margin-right-4" />{releases.Hotfix}
+                    <Icon iconName="Error" className="margin-right-4" />
+                    {releases.Hotfix}
                   </div>
                   <div className="margin-right-16 flex-row flex-center">
                     {ratio > 0 ? (
-                      <Status {...Statuses.Failed} size={StatusSize.s} className="margin-right-4" />
-                      ) : (
-                      <Status {...Statuses.Success} size={StatusSize.s} className="margin-right-4" />
-                    )}{ratio}%
+                      <Status
+                        {...Statuses.Failed}
+                        size={StatusSize.s}
+                        className="margin-right-4"
+                      />
+                    ) : (
+                      <Status
+                        {...Statuses.Success}
+                        size={StatusSize.s}
+                        className="margin-right-4"
+                      />
+                    )}
+                    {ratio}%
                   </div>
                 </div>
               </div>
             );
           })}
+        </Card>
+        <Card className="margin-top-16 bolt-card-white">
+          To track your releases, tag your build run with Release, Hotfix or Rollback. Multiple rollbacks can be tagged with version suffix (e.g. Rollback-2). Old builds will be removed according to the retention policy and will not be part of these metrics.
         </Card>
       </div>
     </Page>

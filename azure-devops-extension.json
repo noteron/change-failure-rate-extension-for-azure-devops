@@ -2,7 +2,7 @@
   "manifestVersion": 1,
   "id": "change-failure-rate-graph",
   "publisher": "SpanaCopita",
-  "version": "1.0.34",
+  "version": "1.0.37",
   "name": "Change failure rate graph",
   "description": "Azure DevOps Extension",
   "categories": ["Azure Pipelines"],
@@ -11,7 +11,6 @@
       "id": "Microsoft.VisualStudio.Services"
     }
   ],
-  "baseUri": "https://localhost:3000",
   "icons": {
     "default": "logo.png"
   },
