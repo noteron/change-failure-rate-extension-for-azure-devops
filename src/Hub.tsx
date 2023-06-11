@@ -315,6 +315,7 @@ const HubContent = (): JSX.Element => {
             </div>
           </div>
         </Card>
+        
         <Card titleProps={{ text: "Last 5 iterations" }}>
           {iterations.map((iteration) => {
             if (!buildsByReleaseType) return undefined;
@@ -335,6 +336,13 @@ const HubContent = (): JSX.Element => {
                   build.startTime < iteration.attributes.finishDate
               ).length,
             };
+            const noHotfixes = releases.Hotfix === 0;
+            const noNormalReleases = releases.Normal === 0;
+            const ratio = noHotfixes 
+              ? noNormalReleases
+                ? 0
+                : 0
+              : (releases.Hotfix / releases.Normal) * 100;
             return (
               <div key={iteration.id} className="flex-grow">
                 <div className="flex-row">
@@ -367,7 +375,7 @@ const HubContent = (): JSX.Element => {
                 <div className="flex-grow margin-top-8">
                   <div>Normal releases: {releases.Normal}</div>
                   <div>Hotfix releases: {releases.Hotfix}</div>
-                  <div>Ratio: {releases.Hotfix / releases.Normal}</div>
+                  <div>Ratio: {ratio}%</div>
                 </div>
               </div>
             );
