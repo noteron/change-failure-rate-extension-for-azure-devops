@@ -231,7 +231,8 @@ const HubContent = (): JSX.Element => {
                 className="margin-right-4 blue-icon"
                 size={IconSize.medium}
               />
-              The percentage of deployments causing a failure in production
+              The ratio of changes that fail in production to the total number
+              of deployments
             </div>
           </div>
         </Card>
